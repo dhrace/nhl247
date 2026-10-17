@@ -2,102 +2,199 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>NHL247 FlightMap V6</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-html,body{height:100%;margin:0;font-family:Segoe UI,Arial,sans-serif;background:#08111f;color:#fff}
-#sidebar{position:absolute;left:0;top:0;bottom:0;width:420px;background:#0f172a;overflow:auto;z-index:1000}
-#map{position:absolute;left:420px;right:0;top:0;bottom:0}
-.hdr{padding:14px 16px;background:#111827;border-bottom:1px solid #334155}
-.hdr h2{margin:0 0 4px;font-size:1.25rem}
-.hdr .sub{font-size:12px;color:#94a3b8}
-.game{background:#1e293b;margin:8px;padding:12px;border-radius:10px;cursor:pointer;transition:background .15s;border-left:4px solid #475569}
-.game:hover{background:#334155}
-.game.live-border{border-left-color:#22c55e}
-.game.fut-border{border-left-color:#3b82f6}
-.game.final-border{border-left-color:#94a3b8}
-.score{font-size:26px;font-weight:bold;margin:6px 0 4px}
+:root{
+  --bg:#070d18;
+  --panel:#0b1220;
+  --card:#152033;
+  --card-hover:#1c2a42;
+  --border:#243247;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --accent:#e31837;
+  --live:#22c55e;
+  --fut:#3b82f6;
+  --final:#94a3b8;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Segoe UI,system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--text)}
+body{display:flex;flex-direction:column}
+
+/* Header */
+.hdr{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;
+  background:linear-gradient(180deg,#111827 0%,#0b1220 100%);
+  border-bottom:1px solid var(--border);
+  z-index:1100;
+}
+.hdr-logo{
+  width:40px;height:40px;object-fit:contain;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));
+}
+.hdr-text{flex:1;min-width:0}
+.hdr-text h1{
+  margin:0;font-size:1.05rem;font-weight:700;letter-spacing:.02em;
+  display:flex;align-items:center;gap:6px;
+}
+.hdr-text h1 span.nhl{color:var(--accent)}
+.hdr-text .sub{font-size:11px;color:var(--muted);margin-top:1px}
+.live-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--live);
+  box-shadow:0 0 0 0 rgba(34,197,94,.7);
+  animation:pulse 1.6s infinite;display:inline-block;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}
+  70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+}
+
+/* Layout */
+.main{flex:1;min-height:0;display:flex;position:relative}
+
+#sidebar{
+  width:400px;max-width:100%;
+  background:var(--panel);
+  overflow:auto;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+}
+#map{flex:1;min-width:0;min-height:0}
+
+.controls{padding:8px 10px 6px;border-bottom:1px solid var(--border);background:#0a101c}
+.date-nav{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.date-nav input[type=date]{
+  flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);
+  background:#121a2b;color:var(--text);font-size:14px
+}
+.icon-btn{
+  width:38px;height:38px;border:1px solid var(--border);border-radius:8px;
+  background:#121a2b;color:var(--text);font-size:14px;cursor:pointer
+}
+.icon-btn:active{background:#1c2a42}
+.today-btn{
+  height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;
+  background:#121a2b;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap
+}
+#filter{
+  width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);
+  background:#121a2b;color:var(--text);font-size:14px;margin-bottom:6px
+}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  padding:6px 11px;border-radius:999px;border:1px solid var(--border);
+  background:#121a2b;color:#cbd5e1;font-size:12px;cursor:pointer;user-select:none
+}
+.chip.active{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.chip.live.active{background:#15803d;border-color:#15803d}
+.chip.final.active{background:#475569;border-color:#475569}
+
+#games{flex:1;overflow:auto;padding:6px 0 16px;-webkit-overflow-scrolling:touch}
+
+.game{
+  background:var(--card);margin:6px 8px;padding:12px;
+  border-radius:12px;cursor:pointer;transition:background .15s;
+  border-left:4px solid #475569
+}
+.game:active{background:var(--card-hover)}
+.game.live-border{border-left-color:var(--live)}
+.game.fut-border{border-left-color:var(--fut)}
+.game.final-border{border-left-color:var(--final)}
 .teams-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.teams-row img.logo{width:28px;height:28px;object-fit:contain;background:rgba(255,255,255,.08);border-radius:4px;padding:2px}
+.teams-row img.logo{
+  width:30px;height:30px;object-fit:contain;
+  background:rgba(255,255,255,.06);border-radius:6px;padding:2px
+}
 .vs{font-size:12px;color:#64748b;font-weight:600}
-.meta{font-size:12px;color:#94a3b8;line-height:1.45}
+.score{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em}
+.meta{font-size:12px;color:var(--muted);line-height:1.5}
 .meta strong{color:#e2e8f0}
-#status{position:absolute;top:10px;right:10px;background:#fff;color:#000;padding:8px 12px;border-radius:8px;z-index:2000;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-input[type=text],input[type=date]{margin:6px 10px;width:calc(100% - 20px);padding:9px 10px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#fff;box-sizing:border-box}
-.filters{display:flex;flex-wrap:wrap;gap:6px;padding:4px 10px 6px}
-.chip{padding:5px 10px;border-radius:16px;border:1px solid #475569;background:#1e293b;color:#cbd5e1;font-size:12px;cursor:pointer;user-select:none}
-.chip.active{background:#2563eb;border-color:#2563eb;color:#fff}
-.chip.live.active{background:#16a34a;border-color:#16a34a}
-.chip.fut.active{background:#2563eb;border-color:#2563eb}
-.chip.final.active{background:#64748b;border-color:#64748b}
-.live{color:#4ade80}
+.live{color:var(--live)}
 .future{color:#60a5fa}
-.final{color:#d1d5db}
-.btn-row{display:flex;gap:8px;padding:4px 10px 8px}
-.btn{flex:1;padding:8px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px}
-.btn:hover{background:#1d4ed8}
-.btn.secondary{background:#334155}
-.btn.secondary:hover{background:#475569}
-.date-nav{display:flex;align-items:center;gap:6px;padding:4px 10px 2px}
-.date-nav .btn{flex:0 0 auto;width:40px;padding:8px 0}
-.date-nav input{margin:0;flex:1}
-.note{font-size:11px;color:#64748b;padding:0 12px 10px;line-height:1.4}
+.final{color:var(--final)}
+
+/* Map labels */
 .game-label{
   color:#fff;font-weight:700;font-size:12px;line-height:1.2;
   padding:4px 7px;border-radius:8px;text-align:center;
-  white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.45);
-  pointer-events:none;border:2px solid transparent;
+  white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5);
+  pointer-events:none;border:2px solid transparent
 }
-.label-live{background:rgba(22,163,74,.92);border-color:#4ade80}
-.label-fut{background:rgba(37,99,235,.9);border-color:#60a5fa}
-.label-final{background:rgba(30,41,59,.92);border-color:#94a3b8}
+.label-live{background:rgba(22,163,74,.94);border-color:#4ade80}
+.label-fut{background:rgba(37,99,235,.92);border-color:#60a5fa}
+.label-final{background:rgba(15,23,42,.94);border-color:#94a3b8}
 .game-label .teams{font-size:11px;opacity:.95}
 .game-label .sc{font-size:14px;margin-top:1px}
 .game-label .tm{font-size:10px;font-weight:600;margin-top:2px;opacity:.9}
-@media(max-width:900px){
-  #sidebar{width:100%;height:45%}
-  #map{left:0;top:45%}
+
+/* Mobile drawer */
+.menu-toggle{
+  display:none;border:1px solid var(--border);background:#121a2b;color:#fff;
+  border-radius:8px;width:40px;height:40px;font-size:18px;cursor:pointer;flex-shrink:0
+}
+.backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050
+}
+.backdrop.show{display:block}
+
+/* Mobile layout */
+@media (max-width:900px){
+  .menu-toggle{display:inline-flex;align-items:center;justify-content:center}
+  .main{flex-direction:column}
+  #sidebar{
+    position:fixed;left:0;top:0;bottom:0;width:min(360px,88vw);
+    z-index:1100;transform:translateX(-105%);
+    transition:transform .22s ease;box-shadow:8px 0 24px rgba(0,0,0,.4);
+    border-right:1px solid var(--border)
+  }
+  #sidebar.open{transform:translateX(0)}
+  #map{width:100%;height:100%}
+  .hdr{padding:10px 12px}
+  .hdr-text h1{font-size:1rem}
 }
 </style>
 </head>
 <body>
-<div id="sidebar">
-  <div class="hdr">
-    <h2>🏒 NHL247 FlightMap V6</h2>
-    <div class="sub">Hybride · labels live · historique</div>
+<header class="hdr">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <img class="hdr-logo"
+       src="https://assets.nhle.com/logos/nhl/svg/NHL_light.svg"
+       alt="NHL"
+       onerror="this.src='https://upload.wikimedia.org/wikipedia/en/3/3a/05_NHL_Shield.svg'">
+  <div class="hdr-text">
+    <h1><span class="nhl">NHL</span>247 FlightMap <span class="live-dot" title="Mise à jour auto"></span></h1>
+    <div class="sub">Scores · carte · historique</div>
   </div>
+</header>
 
-  <div class="date-nav">
-    <button class="btn secondary" id="prevDay" title="Jour précédent">◀</button>
-    <input type="date" id="datePick">
-    <button class="btn secondary" id="nextDay" title="Jour suivant">▶</button>
-    <button class="btn secondary" id="todayBtn" title="Aujourd'hui" style="width:auto;padding:8px 10px">Auj.</button>
-  </div>
+<div class="backdrop" id="backdrop"></div>
 
-  <input type="text" id="filter" placeholder="Filtrer équipe (MTL, TOR, Canadiens...)">
-
-  <div class="filters" id="statusFilters">
-    <span class="chip active" data-status="ALL">Tous</span>
-    <span class="chip live" data-status="LIVE">Live</span>
-    <span class="chip fut" data-status="FUT">À venir</span>
-    <span class="chip final" data-status="FINAL">Terminés</span>
-  </div>
-
-  <div class="btn-row">
-    <button class="btn" id="reloadBtn">🔄 Actualiser</button>
-    <button class="btn secondary" id="forceLocalBtn">📁 Forcer local</button>
-  </div>
-  <div class="note">
-    Labels visibles en permanence sur la carte. Chrono mis à jour pour les matchs LIVE.
-    Choisis une date pour consulter le passé / futur.
-  </div>
-
-  <div id="games">Chargement...</div>
+<div class="main">
+  <aside id="sidebar">
+    <div class="controls">
+      <div class="date-nav">
+        <button class="icon-btn" id="prevDay" title="Jour précédent">◀</button>
+        <input type="date" id="datePick">
+        <button class="icon-btn" id="nextDay" title="Jour suivant">▶</button>
+        <button class="today-btn" id="todayBtn">Auj.</button>
+      </div>
+      <input type="text" id="filter" placeholder="Filtrer équipe (MTL, TOR...)">
+      <div class="filters" id="statusFilters">
+        <span class="chip active" data-status="ALL">Tous</span>
+        <span class="chip live" data-status="LIVE">Live</span>
+        <span class="chip fut" data-status="FUT">À venir</span>
+        <span class="chip final" data-status="FINAL">Terminés</span>
+      </div>
+    </div>
+    <div id="games">Chargement...</div>
+  </aside>
+  <div id="map"></div>
 </div>
-
-<div id="status">Init...</div>
-<div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -115,27 +212,26 @@ const arenas = {
   SJS:[37.3328,-121.9011]
 };
 
-const map = L.map('map').setView([45, -97], 4);
+const map = L.map('map', { zoomControl: true }).setView([45, -97], 4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap'
+  attribution: '© OpenStreetMap',
+  maxZoom: 18
 }).addTo(map);
 
 let games = [];
 let markers = [];
 let activeStatus = 'ALL';
-let selectedDate = null; // YYYY-MM-DD or null = "now"
-let tickTimer = null;
+let selectedDate = null;
+let refreshTimer = null;
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
-
 function shiftDate(iso, days) {
   const d = new Date(iso + 'T12:00:00');
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
-
 function proxyUrlsFor(dateIso) {
   const path = dateIso ? `scoreboard/${dateIso}` : 'scoreboard/now';
   const target = `https://api-web.nhle.com/v1/${path}`;
@@ -145,7 +241,6 @@ function proxyUrlsFor(dateIso) {
     target
   ];
 }
-
 function periodText(g) {
   const pd = g.periodDescriptor;
   if (!pd) return '';
@@ -153,63 +248,48 @@ function periodText(g) {
   if (pd.periodType === 'SO') return 'Tirs de barrage';
   return `${pd.number}e période`;
 }
-
 function clockText(g) {
   if (g.gameState === 'LIVE') {
     const clock = g.clock?.timeRemaining;
     const per = periodText(g);
-    if (clock) return `${per} · ${clock}`;
-    return per || 'LIVE';
+    return clock ? `${per} · ${clock}` : (per || 'LIVE');
   }
   if (g.gameState === 'FUT') {
-    return new Date(g.startTimeUTC).toLocaleTimeString('fr-CA', {
-      hour: '2-digit', minute: '2-digit'
-    });
+    return new Date(g.startTimeUTC).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
   }
   if (g.gameState === 'FINAL' || g.gameState === 'OFF') {
     const per = periodText(g);
-    if (per && per !== '3e période') return `FINAL (${per})`;
-    return 'FINAL';
+    return (per && per !== '3e période') ? `FINAL (${per})` : 'FINAL';
   }
   return g.gameState || '';
 }
-
 function statusClass(state) {
   if (state === 'LIVE') return 'live';
   if (state === 'FUT') return 'future';
   return 'final';
 }
-
 function borderClass(state) {
   if (state === 'LIVE') return 'live-border';
   if (state === 'FUT') return 'fut-border';
   return 'final-border';
 }
-
 function labelClass(state) {
   if (state === 'LIVE') return 'label-live';
   if (state === 'FUT') return 'label-fut';
   return 'label-final';
 }
-
 function formatDateFR(iso) {
   if (!iso) return '';
-  try {
-    return new Date(iso + 'T12:00:00').toLocaleDateString('fr-CA', {
-      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-    });
-  } catch {
-    return iso;
-  }
+  return new Date(iso + 'T12:00:00').toLocaleDateString('fr-CA', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+  });
 }
-
 function formatStartLocal(g) {
   return new Date(g.startTimeUTC).toLocaleString('fr-CA', {
     weekday: 'short', day: 'numeric', month: 'short',
     hour: '2-digit', minute: '2-digit'
   });
 }
-
 function matchesStatus(g) {
   if (activeStatus === 'ALL') return true;
   if (activeStatus === 'LIVE') return g.gameState === 'LIVE';
@@ -217,7 +297,6 @@ function matchesStatus(g) {
   if (activeStatus === 'FINAL') return g.gameState === 'FINAL' || g.gameState === 'OFF';
   return true;
 }
-
 function filteredGames() {
   const q = (document.getElementById('filter').value || '').toUpperCase().trim();
   return games.filter(g => {
@@ -231,47 +310,32 @@ function filteredGames() {
     return hay.includes(q);
   });
 }
-
 function labelHtml(g) {
-  const away = g.awayTeam.abbrev;
-  const home = g.homeTeam.abbrev;
-  const sa = g.awayTeam.score ?? 0;
-  const sh = g.homeTeam.score ?? 0;
-  const tm = clockText(g);
   return `
     <div class="game-label ${labelClass(g.gameState)}">
-      <div class="teams">${away} @ ${home}</div>
-      <div class="sc">${sa} – ${sh}</div>
-      <div class="tm">${tm}</div>
+      <div class="teams">${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</div>
+      <div class="sc">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
+      <div class="tm">${clockText(g)}</div>
     </div>`;
 }
-
 function clearMarkers() {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 }
-
 function placeMarkers(list) {
   clearMarkers();
   const byArena = {};
   list.forEach(g => {
     const h = g.homeTeam.abbrev;
     if (!arenas[h]) return;
-    if (!byArena[h]) byArena[h] = [];
-    byArena[h].push(g);
+    (byArena[h] ||= []).push(g);
   });
-
   Object.entries(byArena).forEach(([abbrev, gs]) => {
     const base = arenas[abbrev];
     gs.forEach((g, i) => {
-      const lat = base[0] + (i * 0.12);
-      const lng = base[1] + (i * 0.08);
-      const icon = L.divIcon({
-        className: '',
-        html: labelHtml(g),
-        iconSize: null,
-        iconAnchor: [50, 20]
-      });
+      const lat = base[0] + i * 0.12;
+      const lng = base[1] + i * 0.08;
+      const icon = L.divIcon({ className: '', html: labelHtml(g), iconSize: null, iconAnchor: [50, 20] });
       const m = L.marker([lat, lng], { icon, zIndexOffset: g.gameState === 'LIVE' ? 1000 : 0 }).addTo(map);
       m._gameId = g.id;
       m.bindPopup(`
@@ -285,32 +349,13 @@ function placeMarkers(list) {
     });
   });
 }
-
-function updateLiveLabels() {
-  markers.forEach(m => {
-    const g = games.find(x => x.id === m._gameId);
-    if (!g || g.gameState !== 'LIVE') return;
-    const icon = L.divIcon({
-      className: '',
-      html: labelHtml(g),
-      iconSize: null,
-      iconAnchor: [50, 20]
-    });
-    m.setIcon(icon);
-  });
-  // also refresh sidebar times for live
-  draw();
-}
-
 function draw() {
   const list = filteredGames();
   const el = document.getElementById('games');
-
   if (!list.length) {
     el.innerHTML = `<div class="game"><b>Aucun match</b><div class="meta">Ajuste la date ou les filtres</div></div>`;
     return;
   }
-
   const order = { LIVE: 0, FUT: 1, FINAL: 2, OFF: 2 };
   list.sort((a, b) => {
     const oa = order[a.gameState] ?? 3;
@@ -318,30 +363,25 @@ function draw() {
     if (oa !== ob) return oa - ob;
     return new Date(a.startTimeUTC) - new Date(b.startTimeUTC);
   });
-
   el.innerHTML = list.map(g => {
     const cls = statusClass(g.gameState);
     const border = borderClass(g.gameState);
-    const dateStr = formatDateFR(g.gameDate);
-    const startStr = formatStartLocal(g);
     const awayLogo = g.awayTeam.logo || `https://assets.nhle.com/logos/nhl/svg/${g.awayTeam.abbrev}_light.svg`;
     const homeLogo = g.homeTeam.logo || `https://assets.nhle.com/logos/nhl/svg/${g.homeTeam.abbrev}_light.svg`;
     return `
       <div class="game ${border}" data-id="${g.id}">
         <div class="teams-row ${cls}">
-          <img class="logo" src="${awayLogo}" alt="${g.awayTeam.abbrev}" loading="lazy"
-               onerror="this.style.display='none'">
+          <img class="logo" src="${awayLogo}" alt="${g.awayTeam.abbrev}" loading="lazy" onerror="this.style.display='none'">
           <b>${g.awayTeam.abbrev}</b>
           <span class="vs">@</span>
-          <img class="logo" src="${homeLogo}" alt="${g.homeTeam.abbrev}" loading="lazy"
-               onerror="this.style.display='none'">
+          <img class="logo" src="${homeLogo}" alt="${g.homeTeam.abbrev}" loading="lazy" onerror="this.style.display='none'">
           <b>${g.homeTeam.abbrev}</b>
         </div>
         <div class="score">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
         <div class="meta">
           <strong>${clockText(g)}</strong><br>
-          📅 ${dateStr}<br>
-          🕐 ${startStr}<br>
+          📅 ${formatDateFR(g.gameDate)}<br>
+          🕐 ${formatStartLocal(g)}<br>
           📍 ${g.venue?.default || '—'}
         </div>
       </div>`;
@@ -357,11 +397,12 @@ function draw() {
         const m = markers.find(mk => mk._gameId === g.id);
         if (m) m.openPopup();
       }
+      // close drawer on mobile after selection
+      closeMenu();
     });
   });
 }
-
-function applyData(data, source) {
+function applyData(data) {
   games = [];
   (data.gamesByDate || []).forEach(d => {
     (d.games || []).forEach(g => {
@@ -369,30 +410,17 @@ function applyData(data, source) {
       games.push(g);
     });
   });
-
   if (selectedDate && games.length === 0) {
     (data.gamesByDate || []).forEach(d => {
       if (d.date === selectedDate) (d.games || []).forEach(g => games.push(g));
     });
   }
-
   placeMarkers(filteredGames());
   draw();
-  document.getElementById('status').innerText =
-    `OK · ${source} · ${games.length} matchs` + (selectedDate ? ` · ${selectedDate}` : '');
-
-  if (tickTimer) clearInterval(tickTimer);
-  if (games.some(g => g.gameState === 'LIVE')) {
-    tickTimer = setInterval(() => {
-      // soft refresh of live data every 15s without full UI flicker if possible
-      load(false);
-    }, 20000);
-  }
+  setTimeout(() => map.invalidateSize(), 120);
 }
-
 async function fetchLive(dateIso) {
-  const urls = proxyUrlsFor(dateIso);
-  for (const url of urls) {
+  for (const url of proxyUrlsFor(dateIso)) {
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 7000);
@@ -405,44 +433,40 @@ async function fetchLive(dateIso) {
   }
   return null;
 }
-
 async function fetchLocal() {
   const r = await fetch('scoreboard_now.json', { cache: 'no-store' });
-  if (!r.ok) throw new Error(`JSON local introuvable (HTTP ${r.status})`);
+  if (!r.ok) throw new Error('Données indisponibles');
   return r.json();
 }
-
-async function load(forceLocal = false) {
-  const statusEl = document.getElementById('status');
-  const dateIso = selectedDate;
-  statusEl.innerText = forceLocal ? 'Chargement local...' : (dateIso ? `Chargement ${dateIso}...` : 'Tentative live...');
-
+async function load() {
   try {
-    let data = null;
-    let source = '';
-
-    if (!forceLocal) {
-      data = await fetchLive(dateIso);
-      if (data) source = dateIso ? `API ${dateIso}` : 'API live';
-    }
-
-    if (!data) {
-      statusEl.innerText = 'Live bloqué → JSON local...';
-      data = await fetchLocal();
-      source = 'JSON local';
-    }
-
-    applyData(data, source);
+    let data = await fetchLive(selectedDate);
+    if (!data) data = await fetchLocal();
+    applyData(data);
   } catch (e) {
-    document.getElementById('games').innerHTML = `
-      <div class="game">
-        <b>Erreur</b><br>${e.message}<br><br>
-        Place <code>scoreboard_now.json</code> à côté de cette page, ou réessaie plus tard.
-      </div>`;
-    statusEl.innerText = 'Erreur';
+    document.getElementById('games').innerHTML =
+      `<div class="game"><b>Erreur</b><div class="meta">${e.message}</div></div>`;
   }
 }
 
+/* Mobile menu */
+const sidebar = document.getElementById('sidebar');
+const backdrop = document.getElementById('backdrop');
+function openMenu() {
+  sidebar.classList.add('open');
+  backdrop.classList.add('show');
+}
+function closeMenu() {
+  sidebar.classList.remove('open');
+  backdrop.classList.remove('show');
+}
+document.getElementById('menuToggle').addEventListener('click', () => {
+  if (sidebar.classList.contains('open')) closeMenu();
+  else openMenu();
+});
+backdrop.addEventListener('click', closeMenu);
+
+/* Filters */
 document.getElementById('statusFilters').addEventListener('click', e => {
   const chip = e.target.closest('.chip');
   if (!chip) return;
@@ -452,46 +476,41 @@ document.getElementById('statusFilters').addEventListener('click', e => {
   placeMarkers(filteredGames());
   draw();
 });
-
 document.getElementById('filter').addEventListener('input', () => {
   placeMarkers(filteredGames());
   draw();
 });
 
-document.getElementById('reloadBtn').addEventListener('click', () => load(false));
-document.getElementById('forceLocalBtn').addEventListener('click', () => load(true));
-
+/* Date nav */
 document.getElementById('datePick').addEventListener('change', e => {
-  const v = e.target.value;
-  if (!v) return;
-  selectedDate = v;
-  load(false);
+  if (!e.target.value) return;
+  selectedDate = e.target.value;
+  load();
 });
-
 document.getElementById('prevDay').addEventListener('click', () => {
-  const base = selectedDate || todayISO();
-  selectedDate = shiftDate(base, -1);
+  selectedDate = shiftDate(selectedDate || todayISO(), -1);
   document.getElementById('datePick').value = selectedDate;
-  load(false);
+  load();
 });
-
 document.getElementById('nextDay').addEventListener('click', () => {
-  const base = selectedDate || todayISO();
-  selectedDate = shiftDate(base, 1);
+  selectedDate = shiftDate(selectedDate || todayISO(), 1);
   document.getElementById('datePick').value = selectedDate;
-  load(false);
+  load();
 });
-
 document.getElementById('todayBtn').addEventListener('click', () => {
   selectedDate = null;
   document.getElementById('datePick').value = todayISO();
-  load(false);
+  load();
 });
 
 document.getElementById('datePick').value = todayISO();
 selectedDate = null;
-load(false);
-setInterval(() => load(false), 45000);
+load();
+// Auto refresh live every 30s
+refreshTimer = setInterval(load, 30000);
+
+// Fix map size on orientation change
+window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 200));
 </script>
 </body>
 </html>
