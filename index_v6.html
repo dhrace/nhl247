@@ -26,6 +26,7 @@ body{display:flex;flex-direction:column}
 #sidebar{width:400px;max-width:100%;background:var(--panel);overflow:auto;border-right:1px solid var(--border);display:flex;flex-direction:column}
 #map{flex:1;min-width:0;min-height:0}
 .controls{padding:8px 10px 6px;border-bottom:1px solid var(--border);background:#0a101c}
+.date-label{font-size:13px;font-weight:600;color:#e2e8f0;padding:2px 2px 6px;letter-spacing:.01em}
 .date-nav{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .date-nav input[type=date]{flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:#121a2b;color:var(--text);font-size:14px}
 .icon-btn{width:38px;height:38px;border:1px solid var(--border);border-radius:8px;background:#121a2b;color:var(--text);font-size:14px;cursor:pointer}
@@ -44,7 +45,7 @@ body{display:flex;flex-direction:column}
 .game.fut-border{border-left-color:var(--fut)}
 .game.final-border{border-left-color:var(--final)}
 .teams-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.teams-row img.logo{width:30px;height:30px;object-fit:contain;background:rgba(255,255,255,.06);border-radius:6px;padding:2px}
+.teams-row img.logo{width:30px;height:30px;object-fit:contain;background:#fff;border-radius:6px;padding:2px}
 .vs{font-size:12px;color:#64748b;font-weight:600}
 .score{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em}
 .meta{font-size:12px;color:var(--muted);line-height:1.5}
@@ -55,7 +56,7 @@ body{display:flex;flex-direction:column}
 .label-fut{background:rgba(37,99,235,.93);border-color:#60a5fa}
 .label-final{background:rgba(15,23,42,.95);border-color:#94a3b8}
 .game-label .logos{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:2px}
-.game-label .logos img{width:22px;height:22px;object-fit:contain;background:rgba(255,255,255,.12);border-radius:4px;padding:1px}
+.game-label .logos img{width:22px;height:22px;object-fit:contain;background:#fff;border-radius:4px;padding:2px;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
 .game-label .logos .at{font-size:9px;opacity:.85;font-weight:600}
 .game-label .sc{font-size:14px;font-weight:800;margin:1px 0}
 .game-label .tm{font-size:10px;font-weight:600;opacity:.92}
@@ -88,6 +89,7 @@ body{display:flex;flex-direction:column}
 <div class="main">
   <aside id="sidebar">
     <div class="controls">
+      <div class="date-label" id="dateLabel">—</div>
       <div class="date-nav">
         <button class="icon-btn" id="prevDay" title="Jour précédent">◀</button>
         <input type="date" id="datePick">
@@ -185,10 +187,11 @@ function labelClass(state) {
   if (state === 'FUT') return 'label-fut';
   return 'label-final';
 }
-function formatDateFR(iso) {
+function formatDateOnly(iso) {
+  // "17 octobre 2026" (jour du mois + mois + année, sans jour de semaine)
   if (!iso) return '';
   return new Date(iso + 'T12:00:00').toLocaleDateString('fr-CA', {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    day: 'numeric', month: 'long', year: 'numeric'
   });
 }
 function formatDateShort(iso) {
@@ -197,11 +200,33 @@ function formatDateShort(iso) {
     day: 'numeric', month: 'short'
   });
 }
-function formatStartLocal(g) {
-  return new Date(g.startTimeUTC).toLocaleString('fr-CA', {
-    weekday: 'short', day: 'numeric', month: 'short',
+function formatTimeOnly(g) {
+  // "21 h 00"
+  return new Date(g.startTimeUTC).toLocaleTimeString('fr-CA', {
     hour: '2-digit', minute: '2-digit'
-  });
+  }).replace(':', ' h ');
+}
+function formatWeekdayDate(iso) {
+  // "Samedi le 17 octobre"
+  if (!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  const weekday = d.toLocaleDateString('fr-CA', { weekday: 'long' });
+  const rest = d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
+  const w = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  return `${w} le ${rest}`;
+}
+function formatPopupWhen(g) {
+  // "Samedi le 17 octobre 22 h 00"
+  const d = new Date(g.startTimeUTC);
+  const weekday = d.toLocaleDateString('fr-CA', { weekday: 'long' });
+  const rest = d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
+  const time = d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }).replace(':', ' h ');
+  const w = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  return `${w} le ${rest} ${time}`;
+}
+function formatStartLocal(g) {
+  // compat
+  return formatPopupWhen(g);
 }
 function teamLogo(team) {
   return team.logo || `https://assets.nhle.com/logos/nhl/svg/${team.abbrev}_light.svg`;
@@ -370,20 +395,20 @@ function placeMarkers(list) {
       }).addTo(map);
       m._gameId = g.id;
       m.bindPopup(`
-        <div style="min-width:140px">
+        <div style="min-width:150px">
           <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:4px">
-            <img src="${teamLogo(g.awayTeam)}" width="28" height="28" style="object-fit:contain" onerror="this.style.display='none'">
+            <img src="${teamLogo(g.awayTeam)}" width="28" height="28" style="object-fit:contain;background:#fff;border-radius:4px;padding:1px" onerror="this.style.display='none'">
             <b>${g.awayTeam.abbrev}</b>
             <span style="opacity:.6">@</span>
-            <img src="${teamLogo(g.homeTeam)}" width="28" height="28" style="object-fit:contain" onerror="this.style.display='none'">
+            <img src="${teamLogo(g.homeTeam)}" width="28" height="28" style="object-fit:contain;background:#fff;border-radius:4px;padding:1px" onerror="this.style.display='none'">
             <b>${g.homeTeam.abbrev}</b>
           </div>
           <div style="font-size:22px;font-weight:bold;text-align:center">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
           <div style="text-align:center">${clockText(g)}</div>
-          <div style="font-size:12px;margin-top:4px;text-align:center">${formatStartLocal(g)}</div>
-          <div style="font-size:11px;color:#555;text-align:center">${g.venue?.default || ''}</div>
+          <div style="font-size:12px;margin-top:6px;text-align:center">${formatPopupWhen(g)}</div>
+          <div style="font-size:11px;color:#555;text-align:center;margin-top:2px">${g.venue?.default || ''}</div>
         </div>
-      `);
+      `, { autoClose: true, closeOnClick: true, closeOnEscapeKey: true });
       markers.push(m);
     });
   });
@@ -418,8 +443,8 @@ function draw() {
         <div class="score">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
         <div class="meta">
           <strong>${clockText(g)}</strong><br>
-          📅 ${formatDateFR(g.gameDate)}<br>
-          🕐 ${formatStartLocal(g)}<br>
+          📅 ${formatDateOnly(g.gameDate)}<br>
+          🕐 ${formatTimeOnly(g)}<br>
           📍 ${g.venue?.default || '—'}
         </div>
       </div>`;
@@ -516,6 +541,16 @@ async function load() {
   }
 }
 
+
+function displayedDateISO() {
+  return selectedDate || todayISO();
+}
+function updateDateLabel() {
+  const el = document.getElementById('dateLabel');
+  if (!el) return;
+  el.textContent = formatWeekdayDate(displayedDateISO());
+}
+
 const sidebar = document.getElementById('sidebar');
 const backdrop = document.getElementById('backdrop');
 function openMenu() {
@@ -549,26 +584,31 @@ document.getElementById('filter').addEventListener('input', () => {
 document.getElementById('datePick').addEventListener('change', e => {
   if (!e.target.value) return;
   selectedDate = e.target.value;
+  updateDateLabel();
   load();
 });
 document.getElementById('prevDay').addEventListener('click', () => {
   selectedDate = shiftDate(selectedDate || todayISO(), -1);
   document.getElementById('datePick').value = selectedDate;
+  updateDateLabel();
   load();
 });
 document.getElementById('nextDay').addEventListener('click', () => {
   selectedDate = shiftDate(selectedDate || todayISO(), 1);
   document.getElementById('datePick').value = selectedDate;
+  updateDateLabel();
   load();
 });
 document.getElementById('todayBtn').addEventListener('click', () => {
   selectedDate = null;
   document.getElementById('datePick').value = todayISO();
+  updateDateLabel();
   load();
 });
 
 document.getElementById('datePick').value = todayISO();
 selectedDate = null;
+updateDateLabel();
 load();
 setInterval(load, 45000);
 window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 200));
