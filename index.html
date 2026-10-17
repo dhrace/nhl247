@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NHL247 FlightMap V4</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+html,body{height:100%;margin:0;font-family:Segoe UI,Arial,sans-serif;background:#08111f;color:#fff}
+#sidebar{position:absolute;left:0;top:0;bottom:0;width:360px;background:#0f172a;overflow:auto;z-index:1000;border-right:1px solid #334155}
+#map{position:absolute;left:360px;right:0;top:0;bottom:0}
+.header{padding:16px;background:#111827}.title{font-size:24px;font-weight:700}
+#games{padding:10px}.game{background:#1e293b;margin-bottom:10px;padding:10px;border-radius:12px}
+.score{font-size:28px;font-weight:bold}.live{color:#4ade80}.final{color:#cbd5e1}.future{color:#60a5fa}
+#status{position:absolute;top:10px;right:10px;background:#fff;color:#000;padding:8px;border-radius:8px;z-index:1001}
+input{width:calc(100% - 20px);margin:10px;padding:10px;background:#111827;color:#fff;border:1px solid #475569;border-radius:8px}
+@media(max-width:900px){#sidebar{width:100%;height:40%}#map{left:0;top:40%}}
+</style>
+</head>
+<body>
+<div id='sidebar'>
+<div class='header'><div class='title'>🏒 NHL247 FlightMap V4</div><div>GitHub Pages Ready</div></div>
+<input id='filter' placeholder='MTL, TOR, EDM...'>
+<div id='games'>Chargement...</div>
+</div>
+<div id='status'>Initialisation...</div>
+<div id='map'></div>
+<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+<script>
+const arenas={MTL:[45.496,-73.5693],TOR:[43.6435,-79.3791],OTT:[45.2969,-75.9272],EDM:[53.5461,-113.497],CGY:[51.0374,-114.05],VAN:[49.2775,-123.108],WPG:[49.8926,-97.1439],SEA:[47.622,-122.354],LAK:[34.043,-118.2673],ANA:[33.8078,-117.8767],VGK:[36.1028,-115.178],COL:[39.7487,-105.0077],DAL:[32.7905,-96.8103],CHI:[41.8807,-87.6742],MIN:[44.9448,-93.101],STL:[38.6268,-90.2026],NSH:[36.1591,-86.7785],DET:[42.3411,-83.055],CBJ:[39.969,-83.0063],PIT:[40.439,-79.9894],BUF:[42.875,-78.8766],BOS:[42.3662,-71.0621],NYR:[40.7505,-73.9934],NYI:[40.7229,-73.5905],NJD:[40.7336,-74.171],PHI:[39.9012,-75.1719],WSH:[38.8981,-77.0209],CAR:[35.8033,-78.7218],TBL:[27.9427,-82.4518],FLA:[26.1585,-80.3256],SJS:[37.3328,-121.9011]};
+const map=L.map('map').setView([45,-97],4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
+let markers=[];let games=[];
+function clearMarkers(){markers.forEach(x=>map.removeLayer(x));markers=[];}
+function statusText(g){if(g.gameState==='LIVE')return `${g.periodDescriptor?.number||''}e période ${g.clock?.timeRemaining||''}`;if(g.gameState==='FUT')return new Date(g.startTimeUTC).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'});if(g.gameState==='FINAL'||g.gameState==='OFF')return 'FINAL';return g.gameState||'';}
+function draw(){let q=(document.getElementById('filter').value||'').toUpperCase();let html='';games.filter(g=>`${g.awayTeam.abbrev} ${g.homeTeam.abbrev}`.includes(q)).forEach(g=>{let cls=g.gameState==='LIVE'?'live':(g.gameState==='FUT'?'future':'final');html+=`<div class='game'><div class='${cls}'><b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b></div><div class='score'>${g.awayTeam.score||0}-${g.homeTeam.score||0}</div><div>${statusText(g)}</div></div>`;});document.getElementById('games').innerHTML=html||'Aucun match';}
+async function load(){try{document.getElementById('status').innerText='Chargement NHL';const r=await fetch('https://api-web.nhle.com/v1/scoreboard/now');const d=await r.json();games=[];(d.gamesByDate||[]).forEach(day=>(day.games||[]).forEach(g=>games.push(g)));clearMarkers();games.forEach(g=>{const h=g.homeTeam.abbrev;if(!arenas[h])return;const m=L.marker(arenas[h]).addTo(map);m.bindPopup(`<b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b><br><div style='font-size:24px'>${g.awayTeam.score||0}-${g.homeTeam.score||0}</div>${statusText(g)}`);markers.push(m);});draw();document.getElementById('status').innerText='OK '+new Date().toLocaleTimeString('fr-CA');}catch(e){document.getElementById('games').innerHTML='<div class="game">Erreur NHL API: '+e.message+'</div>';document.getElementById('status').innerText='Erreur';console.error(e);}}
+document.getElementById('filter').addEventListener('input',draw);load();setInterval(load,30000);
+</script>
+</body></html>
