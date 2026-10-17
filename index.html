@@ -7,136 +7,66 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
-  --bg:#070d18;
-  --panel:#0b1220;
-  --card:#152033;
-  --card-hover:#1c2a42;
-  --border:#243247;
-  --text:#f1f5f9;
-  --muted:#94a3b8;
-  --accent:#e31837;
-  --live:#22c55e;
-  --fut:#3b82f6;
-  --final:#94a3b8;
+  --bg:#070d18;--panel:#0b1220;--card:#152033;--card-hover:#1c2a42;
+  --border:#243247;--text:#f1f5f9;--muted:#94a3b8;--accent:#e31837;
+  --live:#22c55e;--fut:#3b82f6;--final:#94a3b8;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;font-family:Segoe UI,system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--text)}
 body{display:flex;flex-direction:column}
-
-.hdr{
-  flex:0 0 auto;display:flex;align-items:center;gap:12px;
-  padding:10px 14px;
-  background:linear-gradient(180deg,#111827 0%,#0b1220 100%);
-  border-bottom:1px solid var(--border);z-index:1100;
-}
+.hdr{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:10px 14px;background:linear-gradient(180deg,#111827 0%,#0b1220 100%);border-bottom:1px solid var(--border);z-index:1100}
 .hdr-logo{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .hdr-text{flex:1;min-width:0}
 .hdr-text h1{margin:0;font-size:1.05rem;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:6px}
 .hdr-text h1 span.nhl{color:var(--accent)}
 .hdr-text .sub{font-size:11px;color:var(--muted);margin-top:1px}
-.live-dot{
-  width:8px;height:8px;border-radius:50%;background:var(--live);
-  box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 1.6s infinite;display:inline-block
-}
-@keyframes pulse{
-  0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}
-  70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}
-  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
-}
-
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 1.6s infinite;display:inline-block}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
 .main{flex:1;min-height:0;display:flex;position:relative}
-#sidebar{
-  width:400px;max-width:100%;background:var(--panel);overflow:auto;
-  border-right:1px solid var(--border);display:flex;flex-direction:column
-}
+#sidebar{width:400px;max-width:100%;background:var(--panel);overflow:auto;border-right:1px solid var(--border);display:flex;flex-direction:column}
 #map{flex:1;min-width:0;min-height:0}
-
 .controls{padding:8px 10px 6px;border-bottom:1px solid var(--border);background:#0a101c}
 .date-nav{display:flex;align-items:center;gap:6px;margin-bottom:6px}
-.date-nav input[type=date]{
-  flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);
-  background:#121a2b;color:var(--text);font-size:14px
-}
-.icon-btn{
-  width:38px;height:38px;border:1px solid var(--border);border-radius:8px;
-  background:#121a2b;color:var(--text);font-size:14px;cursor:pointer
-}
+.date-nav input[type=date]{flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:#121a2b;color:var(--text);font-size:14px}
+.icon-btn{width:38px;height:38px;border:1px solid var(--border);border-radius:8px;background:#121a2b;color:var(--text);font-size:14px;cursor:pointer}
 .icon-btn:active{background:#1c2a42}
-.today-btn{
-  height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;
-  background:#121a2b;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap
-}
-#filter{
-  width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);
-  background:#121a2b;color:var(--text);font-size:14px;margin-bottom:6px
-}
+.today-btn{height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#121a2b;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+#filter{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:#121a2b;color:var(--text);font-size:14px;margin-bottom:6px}
 .filters{display:flex;flex-wrap:wrap;gap:6px}
-.chip{
-  padding:6px 11px;border-radius:999px;border:1px solid var(--border);
-  background:#121a2b;color:#cbd5e1;font-size:12px;cursor:pointer;user-select:none
-}
+.chip{padding:6px 11px;border-radius:999px;border:1px solid var(--border);background:#121a2b;color:#cbd5e1;font-size:12px;cursor:pointer;user-select:none}
 .chip.active{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
 .chip.live.active{background:#15803d;border-color:#15803d}
 .chip.final.active{background:#475569;border-color:#475569}
-
 #games{flex:1;overflow:auto;padding:6px 0 16px;-webkit-overflow-scrolling:touch}
-.game{
-  background:var(--card);margin:6px 8px;padding:12px;border-radius:12px;cursor:pointer;
-  transition:background .15s;border-left:4px solid #475569
-}
+.game{background:var(--card);margin:6px 8px;padding:12px;border-radius:12px;cursor:pointer;transition:background .15s;border-left:4px solid #475569}
 .game:active{background:var(--card-hover)}
 .game.live-border{border-left-color:var(--live)}
 .game.fut-border{border-left-color:var(--fut)}
 .game.final-border{border-left-color:var(--final)}
 .teams-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.teams-row img.logo{
-  width:30px;height:30px;object-fit:contain;
-  background:rgba(255,255,255,.06);border-radius:6px;padding:2px
-}
+.teams-row img.logo{width:30px;height:30px;object-fit:contain;background:rgba(255,255,255,.06);border-radius:6px;padding:2px}
 .vs{font-size:12px;color:#64748b;font-weight:600}
 .score{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em}
 .meta{font-size:12px;color:var(--muted);line-height:1.5}
 .meta strong{color:#e2e8f0}
 .live{color:var(--live)}.future{color:#60a5fa}.final{color:var(--final)}
-
-/* Map labels with logos */
-.game-label{
-  color:#fff;font-weight:700;font-size:11px;line-height:1.15;
-  padding:5px 7px 4px;border-radius:10px;text-align:center;
-  white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.55);
-  pointer-events:none;border:2px solid transparent;min-width:96px
-}
+.game-label{color:#fff;font-weight:700;font-size:11px;line-height:1.15;padding:5px 7px 4px;border-radius:10px;text-align:center;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.55);pointer-events:none;border:2px solid transparent;min-width:96px}
 .label-live{background:rgba(22,163,74,.95);border-color:#4ade80}
 .label-fut{background:rgba(37,99,235,.93);border-color:#60a5fa}
 .label-final{background:rgba(15,23,42,.95);border-color:#94a3b8}
-.game-label .logos{
-  display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:2px
-}
-.game-label .logos img{
-  width:22px;height:22px;object-fit:contain;
-  background:rgba(255,255,255,.12);border-radius:4px;padding:1px
-}
+.game-label .logos{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:2px}
+.game-label .logos img{width:22px;height:22px;object-fit:contain;background:rgba(255,255,255,.12);border-radius:4px;padding:1px}
 .game-label .logos .at{font-size:9px;opacity:.85;font-weight:600}
 .game-label .sc{font-size:14px;font-weight:800;margin:1px 0}
 .game-label .tm{font-size:10px;font-weight:600;opacity:.92}
 .game-label .dt{font-size:9px;font-weight:600;opacity:.85;margin-top:1px}
-
-.menu-toggle{
-  display:none;border:1px solid var(--border);background:#121a2b;color:#fff;
-  border-radius:8px;width:40px;height:40px;font-size:18px;cursor:pointer;flex-shrink:0
-}
+.menu-toggle{display:none;border:1px solid var(--border);background:#121a2b;color:#fff;border-radius:8px;width:40px;height:40px;font-size:18px;cursor:pointer;flex-shrink:0}
 .backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050}
 .backdrop.show{display:block}
-
 @media (max-width:900px){
   .menu-toggle{display:inline-flex;align-items:center;justify-content:center}
   .main{flex-direction:column}
-  #sidebar{
-    position:fixed;left:0;top:0;bottom:0;width:min(360px,88vw);
-    z-index:1100;transform:translateX(-105%);
-    transition:transform .22s ease;box-shadow:8px 0 24px rgba(0,0,0,.4);
-    border-right:1px solid var(--border)
-  }
+  #sidebar{position:fixed;left:0;top:0;bottom:0;width:min(360px,88vw);z-index:1100;transform:translateX(-105%);transition:transform .22s ease;box-shadow:8px 0 24px rgba(0,0,0,.4);border-right:1px solid var(--border)}
   #sidebar.open{transform:translateX(0)}
   #map{width:100%;height:100%}
   .hdr{padding:10px 12px}
@@ -147,18 +77,14 @@ body{display:flex;flex-direction:column}
 <body>
 <header class="hdr">
   <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
-  <img class="hdr-logo"
-       src="https://assets.nhle.com/logos/nhl/svg/NHL_light.svg"
-       alt="NHL"
+  <img class="hdr-logo" src="https://assets.nhle.com/logos/nhl/svg/NHL_light.svg" alt="NHL"
        onerror="this.src='https://upload.wikimedia.org/wikipedia/en/3/3a/05_NHL_Shield.svg'">
   <div class="hdr-text">
     <h1><span class="nhl">NHL</span>247 FlightMap <span class="live-dot" title="Mise à jour auto"></span></h1>
     <div class="sub">Scores · carte · historique</div>
   </div>
 </header>
-
 <div class="backdrop" id="backdrop"></div>
-
 <div class="main">
   <aside id="sidebar">
     <div class="controls">
@@ -180,7 +106,6 @@ body{display:flex;flex-direction:column}
   </aside>
   <div id="map"></div>
 </div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const arenas = {
@@ -194,7 +119,7 @@ const arenas = {
   BOS:[42.3662,-71.0621], NYR:[40.7505,-73.9934], NYI:[40.7229,-73.5905],
   NJD:[40.7336,-74.171], PHI:[39.9012,-75.1719], WSH:[38.8981,-77.0209],
   CAR:[35.8033,-78.7218], TBL:[27.9427,-82.4518], FLA:[26.1585,-80.3256],
-  SJS:[37.3328,-121.9011]
+  SJS:[37.3328,-121.9011], UTA:[40.7683,-111.9011]
 };
 
 const map = L.map('map', { zoomControl: true }).setView([45, -97], 4);
@@ -206,7 +131,6 @@ let games = [];
 let markers = [];
 let activeStatus = 'ALL';
 let selectedDate = null;
-let refreshTimer = null;
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -216,8 +140,7 @@ function shiftDate(iso, days) {
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
-function proxyUrlsFor(dateIso) {
-  const path = dateIso ? `scoreboard/${dateIso}` : 'scoreboard/now';
+function proxyUrlsFor(path) {
   const target = `https://api-web.nhle.com/v1/${path}`;
   return [
     `https://corsproxy.io/?${target}`,
@@ -283,62 +206,91 @@ function formatStartLocal(g) {
 function teamLogo(team) {
   return team.logo || `https://assets.nhle.com/logos/nhl/svg/${team.abbrev}_light.svg`;
 }
+function isFinal(g) {
+  return g.gameState === 'FINAL' || g.gameState === 'OFF';
+}
+function startMs(g) {
+  return new Date(g.startTimeUTC).getTime();
+}
 
-/** True if game ended / started within the last 24 hours */
-function withinLast24h(g) {
-  const now = Date.now();
-  const start = new Date(g.startTimeUTC).getTime();
-  // estimate end ~3.5h after start for finished games without end time
-  const ref = start;
-  return (now - ref) >= 0 && (now - ref) <= 24 * 60 * 60 * 1000;
+/** Dernier match TERMINÉ joué à domicile dans chaque ville */
+function lastHomeFinalPerCity(list) {
+  const best = {};
+  list.filter(isFinal).forEach(g => {
+    const h = g.homeTeam.abbrev;
+    if (!best[h] || startMs(g) > startMs(best[h])) best[h] = g;
+  });
+  return Object.values(best);
+}
+
+/** Prochain match À VENIR à domicile — un seul par ville */
+function nextHomeFutPerCity(list) {
+  const now = Date.now() - 5 * 60 * 1000;
+  const best = {};
+  list.filter(g => g.gameState === 'FUT' && startMs(g) >= now).forEach(g => {
+    const h = g.homeTeam.abbrev;
+    if (!best[h] || startMs(g) < startMs(best[h])) best[h] = g;
+  });
+  return Object.values(best);
 }
 
 /**
- * Filtre "Tous" (mode aujourd'hui / now) :
- * - matchs LIVE
- * - matchs terminés des 24 dernières heures
- * - seulement le prochain match à venir (le plus proche dans le temps)
- * Si une date précise est choisie : tous les matchs de cette date.
+ * TOUS — logique par équipe :
+ * 1) Matchs LIVE
+ * 2) Matchs d'aujourd'hui (terminés ou à venir)
+ * 3) Pour chaque équipe absente, ajouter son dernier match terminé
+ *    (doublons possibles volontairement pour représenter l'adversaire)
  */
-function matchesTousSmart(g, nextFutId) {
-  if (selectedDate) return true; // date choisie → tout le jour
+function gamesForTous(list) {
+  const today = todayISO();
+  const byId = new Map();
 
-  if (g.gameState === 'LIVE') return true;
+  const add = g => { if (g && g.id != null) byId.set(g.id, g); };
 
-  if (g.gameState === 'FINAL' || g.gameState === 'OFF') {
-    return withinLast24h(g);
-  }
+  // LIVE + tout le jour courant
+  list.forEach(g => {
+    if (g.gameState === 'LIVE') add(g);
+    else if (g.gameDate === today) add(g);
+  });
 
-  if (g.gameState === 'FUT') {
-    return nextFutId != null && g.id === nextFutId;
-  }
+  // Équipes déjà représentées
+  const covered = new Set();
+  byId.forEach(g => {
+    covered.add(g.awayTeam.abbrev);
+    covered.add(g.homeTeam.abbrev);
+  });
 
-  return false;
+  // Toutes les équipes connues (aréna + données)
+  const allTeams = new Set(Object.keys(arenas));
+  list.forEach(g => {
+    allTeams.add(g.awayTeam.abbrev);
+    allTeams.add(g.homeTeam.abbrev);
+  });
+
+  // Dernier match terminé par équipe
+  const lastByTeam = {};
+  list.filter(isFinal).forEach(g => {
+    [g.awayTeam.abbrev, g.homeTeam.abbrev].forEach(t => {
+      if (!lastByTeam[t] || startMs(g) > startMs(lastByTeam[t])) lastByTeam[t] = g;
+    });
+  });
+
+  allTeams.forEach(t => {
+    if (covered.has(t)) return;
+    const last = lastByTeam[t];
+    if (!last) return;
+    add(last);
+    covered.add(last.awayTeam.abbrev);
+    covered.add(last.homeTeam.abbrev);
+  });
+
+  return Array.from(byId.values());
 }
 
-function getNextFutId(list) {
-  const now = Date.now();
-  const fut = list
-    .filter(g => g.gameState === 'FUT' && new Date(g.startTimeUTC).getTime() >= now - 5 * 60 * 1000)
-    .sort((a, b) => new Date(a.startTimeUTC) - new Date(b.startTimeUTC));
-  return fut.length ? fut[0].id : null;
-}
-
-function matchesStatus(g, nextFutId) {
-  if (activeStatus === 'ALL') return matchesTousSmart(g, nextFutId);
-  if (activeStatus === 'LIVE') return g.gameState === 'LIVE';
-  if (activeStatus === 'FUT') return g.gameState === 'FUT';
-  if (activeStatus === 'FINAL') return g.gameState === 'FINAL' || g.gameState === 'OFF';
-  return true;
-}
-
-function filteredGames() {
+function textFilter(list) {
   const q = (document.getElementById('filter').value || '').toUpperCase().trim();
-  const nextFutId = getNextFutId(games);
-
-  return games.filter(g => {
-    if (!matchesStatus(g, nextFutId)) return false;
-    if (!q) return true;
+  if (!q) return list;
+  return list.filter(g => {
     const hay = [
       g.awayTeam.abbrev, g.homeTeam.abbrev,
       g.awayTeam.placeName?.default, g.homeTeam.placeName?.default,
@@ -348,10 +300,33 @@ function filteredGames() {
   });
 }
 
+function filteredGames() {
+  // Date précise choisie → matchs de ce jour, filtrés par statut simple
+  if (selectedDate) {
+    let list = games.filter(g => g.gameDate === selectedDate);
+    if (activeStatus === 'LIVE') list = list.filter(g => g.gameState === 'LIVE');
+    else if (activeStatus === 'FUT') list = list.filter(g => g.gameState === 'FUT');
+    else if (activeStatus === 'FINAL') list = list.filter(isFinal);
+    return textFilter(list);
+  }
+
+  // Mode "aujourd'hui / now" avec logiques intelligentes
+  if (activeStatus === 'LIVE') {
+    return textFilter(games.filter(g => g.gameState === 'LIVE'));
+  }
+  if (activeStatus === 'FUT') {
+    return textFilter(nextHomeFutPerCity(games));
+  }
+  if (activeStatus === 'FINAL') {
+    return textFilter(lastHomeFinalPerCity(games));
+  }
+  // ALL
+  return textFilter(gamesForTous(games));
+}
+
 function labelHtml(g) {
   const al = teamLogo(g.awayTeam);
   const hl = teamLogo(g.homeTeam);
-  const dateStr = formatDateShort(g.gameDate);
   return `
     <div class="game-label ${labelClass(g.gameState)}">
       <div class="logos">
@@ -361,7 +336,7 @@ function labelHtml(g) {
       </div>
       <div class="sc">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
       <div class="tm">${clockText(g)}</div>
-      <div class="dt">${dateStr}</div>
+      <div class="dt">${formatDateShort(g.gameDate)}</div>
     </div>`;
 }
 
@@ -381,7 +356,6 @@ function placeMarkers(list) {
   Object.entries(byArena).forEach(([abbrev, gs]) => {
     const base = arenas[abbrev];
     gs.forEach((g, i) => {
-      // offset vertical if several labels on same city
       const lat = base[0] + i * 0.28;
       const lng = base[1] + i * 0.05;
       const icon = L.divIcon({
@@ -398,12 +372,10 @@ function placeMarkers(list) {
       m.bindPopup(`
         <div style="min-width:140px">
           <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:4px">
-            <img src="${teamLogo(g.awayTeam)}" width="28" height="28" style="object-fit:contain"
-                 onerror="this.style.display='none'">
+            <img src="${teamLogo(g.awayTeam)}" width="28" height="28" style="object-fit:contain" onerror="this.style.display='none'">
             <b>${g.awayTeam.abbrev}</b>
             <span style="opacity:.6">@</span>
-            <img src="${teamLogo(g.homeTeam)}" width="28" height="28" style="object-fit:contain"
-                 onerror="this.style.display='none'">
+            <img src="${teamLogo(g.homeTeam)}" width="28" height="28" style="object-fit:contain" onerror="this.style.display='none'">
             <b>${g.homeTeam.abbrev}</b>
           </div>
           <div style="font-size:22px;font-weight:bold;text-align:center">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
@@ -429,7 +401,7 @@ function draw() {
     const oa = order[a.gameState] ?? 3;
     const ob = order[b.gameState] ?? 3;
     if (oa !== ob) return oa - ob;
-    return new Date(a.startTimeUTC) - new Date(b.startTimeUTC);
+    return startMs(a) - startMs(b);
   });
   el.innerHTML = list.map(g => {
     const cls = statusClass(g.gameState);
@@ -468,26 +440,29 @@ function draw() {
   });
 }
 
-function applyData(data) {
-  games = [];
-  (data.gamesByDate || []).forEach(d => {
-    (d.games || []).forEach(g => {
-      if (selectedDate && g.gameDate && g.gameDate !== selectedDate) return;
-      games.push(g);
-    });
+function mergeGamesById(lists) {
+  const map = new Map();
+  lists.flat().forEach(g => {
+    if (g && g.id != null) map.set(g.id, g);
   });
-  if (selectedDate && games.length === 0) {
-    (data.gamesByDate || []).forEach(d => {
-      if (d.date === selectedDate) (d.games || []).forEach(g => games.push(g));
-    });
-  }
+  return Array.from(map.values());
+}
+
+function extractGames(data) {
+  const out = [];
+  (data.gamesByDate || []).forEach(d => (d.games || []).forEach(g => out.push(g)));
+  return out;
+}
+
+function applyData(list) {
+  games = list;
   placeMarkers(filteredGames());
   draw();
   setTimeout(() => map.invalidateSize(), 120);
 }
 
-async function fetchLive(dateIso) {
-  for (const url of proxyUrlsFor(dateIso)) {
+async function fetchJson(path) {
+  for (const url of proxyUrlsFor(path)) {
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 7000);
@@ -495,21 +470,46 @@ async function fetchLive(dateIso) {
       clearTimeout(t);
       if (!r.ok) continue;
       const data = await r.json();
-      if (data && data.gamesByDate) return data;
+      if (data) return data;
     } catch (_) {}
   }
   return null;
 }
+
 async function fetchLocal() {
   const r = await fetch('scoreboard_now.json', { cache: 'no-store' });
   if (!r.ok) throw new Error('Données indisponibles');
   return r.json();
 }
+
+/** Charge now + quelques jours passés pour "dernier match par ville/équipe" */
 async function load() {
   try {
-    let data = await fetchLive(selectedDate);
-    if (!data) data = await fetchLocal();
-    applyData(data);
+    if (selectedDate) {
+      let data = await fetchJson(`scoreboard/${selectedDate}`);
+      if (!data) data = await fetchLocal();
+      let list = extractGames(data);
+      if (selectedDate) list = list.filter(g => g.gameDate === selectedDate || !g.gameDate);
+      applyData(list);
+      return;
+    }
+
+    // Mode now : scoreboard/now + 10 jours en arrière pour historique
+    const today = todayISO();
+    const paths = ['scoreboard/now'];
+    for (let i = 1; i <= 10; i++) {
+      paths.push(`scoreboard/${shiftDate(today, -i)}`);
+    }
+
+    const results = await Promise.all(paths.map(p => fetchJson(p)));
+    const chunks = results.filter(Boolean).map(extractGames);
+    let list = mergeGamesById(chunks);
+
+    if (!list.length) {
+      const local = await fetchLocal();
+      list = extractGames(local);
+    }
+    applyData(list);
   } catch (e) {
     document.getElementById('games').innerHTML =
       `<div class="game"><b>Erreur</b><div class="meta">${e.message}</div></div>`;
@@ -570,7 +570,7 @@ document.getElementById('todayBtn').addEventListener('click', () => {
 document.getElementById('datePick').value = todayISO();
 selectedDate = null;
 load();
-refreshTimer = setInterval(load, 30000);
+setInterval(load, 45000);
 window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 200));
 </script>
 </body>
