@@ -7,37 +7,69 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 html,body{height:100%;margin:0;font-family:Segoe UI,Arial;background:#08111f;color:#fff}
-#sidebar{position:absolute;left:0;top:0;bottom:0;width:380px;background:#0f172a;overflow:auto;z-index:1000}
-#map{position:absolute;left:380px;right:0;top:0;bottom:0}
-.hdr{padding:15px;background:#111827;border-bottom:1px solid #334155}
-.game{background:#1e293b;margin:8px;padding:10px;border-radius:10px}
-.score{font-size:26px;font-weight:bold}
-#status{position:absolute;top:10px;right:10px;background:#fff;color:#000;padding:8px;border-radius:8px;z-index:2000}
-input{margin:10px;width:calc(100% - 20px);padding:10px}
+#sidebar{position:absolute;left:0;top:0;bottom:0;width:400px;background:#0f172a;overflow:auto;z-index:1000}
+#map{position:absolute;left:400px;right:0;top:0;bottom:0}
+.hdr{padding:14px 16px;background:#111827;border-bottom:1px solid #334155}
+.hdr h2{margin:0 0 4px;font-size:1.25rem}
+.hdr .sub{font-size:12px;color:#94a3b8}
+.game{background:#1e293b;margin:8px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s}
+.game:hover{background:#334155}
+.score{font-size:24px;font-weight:bold;margin:4px 0}
+#status{position:absolute;top:10px;right:10px;background:#fff;color:#000;padding:8px 12px;border-radius:8px;z-index:2000;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+input[type=text]{margin:8px 10px 4px;width:calc(100% - 20px);padding:10px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:6px;padding:6px 10px 4px}
+.chip{padding:5px 10px;border-radius:16px;border:1px solid #475569;background:#1e293b;color:#cbd5e1;font-size:12px;cursor:pointer;user-select:none}
+.chip.active{background:#2563eb;border-color:#2563eb;color:#fff}
+.chip.live.active{background:#16a34a;border-color:#16a34a}
+.chip.fut.active{background:#2563eb;border-color:#2563eb}
+.chip.final.active{background:#64748b;border-color:#64748b}
 .live{color:#4ade80}
 .future{color:#60a5fa}
 .final{color:#d1d5db}
-.btn{margin:8px 10px;padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.btn-row{display:flex;gap:8px;padding:6px 10px 8px}
+.btn{flex:1;padding:8px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px}
 .btn:hover{background:#1d4ed8}
-.note{font-size:12px;color:#94a3b8;padding:0 12px 8px}
-@media(max-width:900px){#sidebar{width:100%;height:40%}#map{left:0;top:40%}}
+.btn.secondary{background:#334155}
+.btn.secondary:hover{background:#475569}
+.note{font-size:11px;color:#64748b;padding:0 12px 10px;line-height:1.4}
+.source{font-size:11px;color:#94a3b8;margin-top:2px}
+@media(max-width:900px){
+  #sidebar{width:100%;height:42%}
+  #map{left:0;top:42%}
+}
 </style>
 </head>
 <body>
-<div id='sidebar'>
-  <div class='hdr'>
+<div id="sidebar">
+  <div class="hdr">
     <h2>🏒 NHL247 FlightMap V6</h2>
-    <div>Version JSON local (hors ligne / anti-blocage)</div>
+    <div class="sub">Mode hybride · API live + JSON local</div>
   </div>
-  <input id='filter' placeholder='Filtrer équipe...'>
-  <button class='btn' id='reloadBtn'>Recharger JSON local</button>
-  <div class='note'>Charge <code>scoreboard_now.json</code> (même dossier). Pour mettre à jour : télécharge le JSON depuis un environnement non bloqué.</div>
-  <div id='games'>Chargement...</div>
-</div>
-<div id='status'>Init...</div>
-<div id='map'></div>
 
-<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+  <input type="text" id="filter" placeholder="Filtrer équipe (MTL, TOR...)">
+
+  <div class="filters" id="statusFilters">
+    <span class="chip active" data-status="ALL">Tous</span>
+    <span class="chip live" data-status="LIVE">Live</span>
+    <span class="chip fut" data-status="FUT">À venir</span>
+    <span class="chip final" data-status="FINAL">Terminés</span>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="reloadBtn">🔄 Actualiser</button>
+    <button class="btn secondary" id="forceLocalBtn">📁 Forcer local</button>
+  </div>
+  <div class="note">
+    Hybride : tente d’abord l’API NHL (proxies), bascule automatiquement sur <code>scoreboard_now.json</code> si bloqué.
+  </div>
+
+  <div id="games">Chargement...</div>
+</div>
+
+<div id="status">Init...</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const arenas = {
   MTL:[45.496,-73.5693], TOR:[43.6435,-79.3791], OTT:[45.2969,-75.9272],
@@ -53,77 +85,199 @@ const arenas = {
   SJS:[37.3328,-121.9011]
 };
 
-const map = L.map('map').setView([45,-97], 4);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+const PROXY_URLS = [
+  'https://corsproxy.io/?https://api-web.nhle.com/v1/scoreboard/now',
+  'https://cors.isomorphic-git.org/https://api-web.nhle.com/v1/scoreboard/now',
+  'https://api-web.nhle.com/v1/scoreboard/now'
+];
+
+const map = L.map('map').setView([45, -97], 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
 
 let games = [];
 let markers = [];
+let activeStatus = 'ALL';
+let lastSource = '';
 
-function clearM() {
+function clearMarkers() {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 }
 
-function st(g) {
-  if (g.gameState === 'LIVE') return `${g.periodDescriptor?.number || ''}e période ${g.clock?.timeRemaining || ''}`;
-  if (g.gameState === 'FUT') return new Date(g.startTimeUTC).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+function statusLabel(g) {
+  if (g.gameState === 'LIVE') {
+    const per = g.periodDescriptor?.number || '';
+    const clock = g.clock?.timeRemaining || '';
+    return `${per}e · ${clock}`;
+  }
+  if (g.gameState === 'FUT') {
+    return new Date(g.startTimeUTC).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+  }
   if (g.gameState === 'FINAL' || g.gameState === 'OFF') return 'FINAL';
   return g.gameState || '';
 }
 
-function draw() {
-  const q = (document.getElementById('filter').value || '').toUpperCase();
-  document.getElementById('games').innerHTML = games
-    .filter(g => `${g.awayTeam.abbrev} ${g.homeTeam.abbrev}`.includes(q))
-    .map(g => {
-      const c = g.gameState === 'LIVE' ? 'live' : (g.gameState === 'FUT' ? 'future' : 'final');
-      return `<div class='game'>
-        <div class='${c}'><b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b></div>
-        <div class='score'>${g.awayTeam.score || 0}-${g.homeTeam.score || 0}</div>
-        <div>${st(g)}</div>
-      </div>`;
-    }).join('') || 'Aucun match';
+function statusClass(state) {
+  if (state === 'LIVE') return 'live';
+  if (state === 'FUT') return 'future';
+  return 'final';
 }
 
-async function loadLocal() {
-  try {
-    document.getElementById('status').innerText = 'Chargement JSON local...';
-    const r = await fetch('scoreboard_now.json', { cache: 'no-store' });
-    if (!r.ok) throw new Error(`HTTP ${r.status} — place scoreboard_now.json à côté de index_v6.html`);
-    const data = await r.json();
+function matchesStatus(g) {
+  if (activeStatus === 'ALL') return true;
+  if (activeStatus === 'LIVE') return g.gameState === 'LIVE';
+  if (activeStatus === 'FUT') return g.gameState === 'FUT';
+  if (activeStatus === 'FINAL') return g.gameState === 'FINAL' || g.gameState === 'OFF';
+  return true;
+}
 
-    games = [];
-    (data.gamesByDate || []).forEach(d => (d.games || []).forEach(g => games.push(g)));
+function filteredGames() {
+  const q = (document.getElementById('filter').value || '').toUpperCase().trim();
+  return games.filter(g => {
+    if (!matchesStatus(g)) return false;
+    if (!q) return true;
+    const teams = `${g.awayTeam.abbrev} ${g.homeTeam.abbrev} ${g.awayTeam.placeName?.default || ''} ${g.homeTeam.placeName?.default || ''}`.toUpperCase();
+    return teams.includes(q);
+  });
+}
 
-    clearM();
-    games.forEach(g => {
-      const h = g.homeTeam.abbrev;
-      if (!arenas[h]) return;
-      const m = L.marker(arenas[h]).addTo(map);
-      m.bindPopup(`
-        <b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b><br>
-        <div style="font-size:24px">${g.awayTeam.score || 0}-${g.homeTeam.score || 0}</div>
-        <div>${st(g)}</div>
-      `);
-      markers.push(m);
+function draw() {
+  const list = filteredGames();
+  const el = document.getElementById('games');
+
+  if (!list.length) {
+    el.innerHTML = `<div class="game"><b>Aucun match</b><div class="source">Ajuste les filtres ou actualise</div></div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(g => {
+    const cls = statusClass(g.gameState);
+    return `
+      <div class="game" data-id="${g.id}">
+        <div class="${cls}"><b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b></div>
+        <div class="score">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
+        <div>${statusLabel(g)}</div>
+        <div class="source">${g.venue?.default || ''}</div>
+      </div>`;
+  }).join('');
+
+  // Clic → centrer la carte sur l’aréna
+  el.querySelectorAll('.game').forEach(card => {
+    card.addEventListener('click', () => {
+      const g = games.find(x => String(x.id) === card.dataset.id);
+      if (!g) return;
+      const coords = arenas[g.homeTeam.abbrev];
+      if (coords) {
+        map.setView(coords, 8);
+        const m = markers.find(mk => mk._gameId === g.id);
+        if (m) m.openPopup();
+      }
     });
+  });
+}
 
-    draw();
-    document.getElementById('status').innerText = `OK (local) — ${games.length} matchs`;
+function placeMarkers(list) {
+  clearMarkers();
+  list.forEach(g => {
+    const h = g.homeTeam.abbrev;
+    if (!arenas[h]) return;
+    const m = L.marker(arenas[h]).addTo(map);
+    m._gameId = g.id;
+    m.bindPopup(`
+      <b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b><br>
+      <div style="font-size:22px;font-weight:bold">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
+      <div>${statusLabel(g)}</div>
+      <div style="font-size:11px;color:#666">${g.venue?.default || ''}</div>
+    `);
+    markers.push(m);
+  });
+}
+
+function applyData(data, source) {
+  games = [];
+  (data.gamesByDate || []).forEach(d => (d.games || []).forEach(g => games.push(g)));
+  lastSource = source;
+  placeMarkers(filteredGames());
+  draw();
+  document.getElementById('status').innerText = `OK · ${source} · ${games.length} matchs`;
+}
+
+async function fetchLive() {
+  for (const url of PROXY_URLS) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 6000);
+      const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(t);
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (data && data.gamesByDate) return data;
+    } catch (_) { /* try next */ }
+  }
+  return null;
+}
+
+async function fetchLocal() {
+  const r = await fetch('scoreboard_now.json', { cache: 'no-store' });
+  if (!r.ok) throw new Error(`JSON local introuvable (HTTP ${r.status})`);
+  return r.json();
+}
+
+async function load(forceLocal = false) {
+  const statusEl = document.getElementById('status');
+  statusEl.innerText = forceLocal ? 'Chargement local...' : 'Tentative live...';
+
+  try {
+    let data = null;
+    let source = '';
+
+    if (!forceLocal) {
+      data = await fetchLive();
+      if (data) source = 'API live';
+    }
+
+    if (!data) {
+      statusEl.innerText = 'Live bloqué → JSON local...';
+      data = await fetchLocal();
+      source = 'JSON local';
+    }
+
+    applyData(data, source);
   } catch (e) {
     document.getElementById('games').innerHTML = `
-      <div class='game'>
+      <div class="game">
         <b>Erreur</b><br>${e.message}<br><br>
-        Assure-toi que <code>scoreboard_now.json</code> est dans le même dossier que cette page.
+        Place <code>scoreboard_now.json</code> à côté de cette page, ou réessaie plus tard.
       </div>`;
-    document.getElementById('status').innerText = 'Erreur';
+    statusEl.innerText = 'Erreur';
   }
 }
 
-document.getElementById('filter').addEventListener('input', draw);
-document.getElementById('reloadBtn').addEventListener('click', loadLocal);
+// Filtres statut (chips)
+document.getElementById('statusFilters').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  document.querySelectorAll('#statusFilters .chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeStatus = chip.dataset.status;
+  placeMarkers(filteredGames());
+  draw();
+});
 
-loadLocal();
+// Filtre texte
+document.getElementById('filter').addEventListener('input', () => {
+  placeMarkers(filteredGames());
+  draw();
+});
+
+document.getElementById('reloadBtn').addEventListener('click', () => load(false));
+document.getElementById('forceLocalBtn').addEventListener('click', () => load(true));
+
+// Auto-refresh toutes les 45 s (mode hybride)
+load(false);
+setInterval(() => load(false), 45000);
 </script>
 </body>
 </html>
