@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NHL FlightMap V3</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#08111f;--panel:#101b2e;--card:#17263f;--txt:#eef4ff;--accent:#36c}
+*{box-sizing:border-box} html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:var(--bg);color:var(--txt)}
+#sidebar{position:absolute;left:0;top:0;bottom:0;width:380px;background:linear-gradient(#0f172a,#111827);overflow:auto;border-right:1px solid #334155;z-index:999}
+#map{position:absolute;left:380px;right:0;top:0;bottom:0}
+.h{padding:16px;border-bottom:1px solid #334155}.title{font-size:26px;font-weight:700}
+.section{padding:12px}.game{background:var(--card);margin-bottom:10px;padding:10px;border-radius:12px}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1e40af;font-size:12px}
+.live{background:#15803d}.final{background:#4b5563}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.btn{background:#1e293b;color:white;border:0;padding:8px;border-radius:8px}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:white}
+.stat{position:absolute;right:12px;top:12px;background:white;color:black;padding:8px;border-radius:8px;z-index:1000}
+.markerCard{background:#111827;color:white;border-radius:10px;padding:8px;min-width:220px;border:1px solid #334155}.score{font-size:28px;font-weight:bold}
+.small{font-size:12px;color:#cbd5e1}#debug{white-space:pre-wrap;font-size:11px;color:#94a3b8}
+@media(max-width:900px){#sidebar{width:100%;height:45%;bottom:auto}#map{left:0;top:45%}}
+</style></head><body>
+<div id="sidebar"><div class="h"><div class="title">🏒 NHL FlightMap V3</div><div class="small">Tableau de bord interactif NHL</div></div>
+<div class="section"><input id="search" placeholder="Filtrer (MTL, EDM, TOR...)"/></div>
+<div class="section toolbar"><button class="btn" onclick="filterMode='ALL';renderList()">Tous</button><button class="btn" onclick="filterMode='LIVE';renderList()">Live</button><button class="btn" onclick="filterMode='FUT';renderList()">À venir</button><button class="btn" onclick="filterMode='FINAL';renderList()">Final</button></div>
+<div class="section" id="games">Chargement...</div><div class="section"><div id="debug"></div></div></div>
+<div class="stat" id="status">Initialisation...</div><div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const arenas={MTL:[45.496,-73.5693],TOR:[43.6435,-79.3791],OTT:[45.2969,-75.9272],EDM:[53.5461,-113.497],CGY:[51.0374,-114.05],VAN:[49.2775,-123.108],WPG:[49.8926,-97.1439],SEA:[47.622,-122.354],LAK:[34.043,-118.2673],ANA:[33.8078,-117.8767],VGK:[36.1028,-115.178],COL:[39.7487,-105.0077],DAL:[32.7905,-96.8103],CHI:[41.8807,-87.6742],MIN:[44.9448,-93.101],STL:[38.6268,-90.2026],NSH:[36.1591,-86.7785],DET:[42.3411,-83.055],CBJ:[39.969,-83.0063],PIT:[40.439,-79.9894],BUF:[42.875,-78.8766],BOS:[42.3662,-71.0621],NYR:[40.7505,-73.9934],NYI:[40.7229,-73.5905],NJD:[40.7336,-74.171],PHI:[39.9012,-75.1719],WSH:[38.8981,-77.0209],CAR:[35.8033,-78.7218],TBL:[27.9427,-82.4518],FLA:[26.1585,-80.3256],SJS:[37.3328,-121.9011]};
+const map=L.map('map',{zoomControl:true}).setView([45,-97],4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OpenStreetMap'}).addTo(map);
+let markers=[]; let games=[]; let filterMode='ALL';
+function clearMarkers(){markers.forEach(m=>map.removeLayer(m));markers=[];}
+function stateText(g){if(g.gameState==='LIVE')return `${g.periodDescriptor?.number||''}e période ${g.clock?.timeRemaining||''}`;if(g.gameState==='FUT')return new Date(g.startTimeUTC).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'});if(g.gameState==='FINAL'||g.gameState==='OFF')return 'FINAL';return g.gameState||''}
+function badgeCls(s){return s==='LIVE'?'badge live':((s==='FINAL'||s==='OFF')?'badge final':'badge')}
+function renderList(){let q=(document.getElementById('search').value||'').toUpperCase();let html='';games.filter(g=>filterMode==='ALL'||g.gameState===filterMode||((filterMode==='FINAL')&&(g.gameState==='OFF'))).filter(g=>`${g.awayTeam.abbrev} ${g.homeTeam.abbrev}`.includes(q)).forEach(g=>{html+=`<div class='game'><div><span class='${badgeCls(g.gameState)}'>${g.gameState}</span></div><b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b><div class='score'>${g.awayTeam.score||0}-${g.homeTeam.score||0}</div><div>${stateText(g)}</div></div>`});document.getElementById('games').innerHTML=html||'Aucun match';}
+async function load(){document.getElementById('status').textContent='Chargement NHL...';try{let r=await fetch('https://api-web.nhle.com/v1/scoreboard/now');let d=await r.json();games=[];(d.gamesByDate||[]).forEach(day=>((day.games)||[]).forEach(g=>games.push(g)));clearMarkers();games.forEach(g=>{let h=g.homeTeam.abbrev;if(!arenas[h])return;let txt=stateText(g);let marker=L.marker(arenas[h]).addTo(map);marker.bindPopup(`<div class='markerCard'><b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b><div class='score'>${g.awayTeam.score||0}-${g.homeTeam.score||0}</div><div>${txt}</div><div>${g.venue?.default||''}</div></div>`);markers.push(marker);});renderList();document.getElementById('status').textContent='MAJ '+new Date().toLocaleTimeString('fr-CA');document.getElementById('debug').textContent='Matchs chargés: '+games.length+'
+API NHL: OK
+Carte: OK
+Dernière MAJ: '+new Date().toLocaleString('fr-CA');}catch(e){document.getElementById('status').textContent='Erreur';document.getElementById('games').innerHTML='<div class="game">Si tu ouvres le fichier localement sur iPad et que rien ne s'affiche, héberge simplement ce fichier sur GitHub Pages. Le code fonctionne, mais iPad peut bloquer certaines requêtes réseau en mode fichier local.</div>';document.getElementById('debug').textContent='Erreur: '+e;}}
+document.getElementById('search').addEventListener('input',renderList);load();setInterval(load,30000);
+</script></body></html>
