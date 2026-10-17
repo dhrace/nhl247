@@ -23,30 +23,20 @@
 html,body{height:100%;margin:0;font-family:Segoe UI,system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--text)}
 body{display:flex;flex-direction:column}
 
-/* Header */
 .hdr{
-  flex:0 0 auto;
-  display:flex;align-items:center;gap:12px;
+  flex:0 0 auto;display:flex;align-items:center;gap:12px;
   padding:10px 14px;
   background:linear-gradient(180deg,#111827 0%,#0b1220 100%);
-  border-bottom:1px solid var(--border);
-  z-index:1100;
+  border-bottom:1px solid var(--border);z-index:1100;
 }
-.hdr-logo{
-  width:40px;height:40px;object-fit:contain;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));
-}
+.hdr-logo{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .hdr-text{flex:1;min-width:0}
-.hdr-text h1{
-  margin:0;font-size:1.05rem;font-weight:700;letter-spacing:.02em;
-  display:flex;align-items:center;gap:6px;
-}
+.hdr-text h1{margin:0;font-size:1.05rem;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:6px}
 .hdr-text h1 span.nhl{color:var(--accent)}
 .hdr-text .sub{font-size:11px;color:var(--muted);margin-top:1px}
 .live-dot{
   width:8px;height:8px;border-radius:50%;background:var(--live);
-  box-shadow:0 0 0 0 rgba(34,197,94,.7);
-  animation:pulse 1.6s infinite;display:inline-block;
+  box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 1.6s infinite;display:inline-block
 }
 @keyframes pulse{
   0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}
@@ -54,15 +44,10 @@ body{display:flex;flex-direction:column}
   100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
 }
 
-/* Layout */
 .main{flex:1;min-height:0;display:flex;position:relative}
-
 #sidebar{
-  width:400px;max-width:100%;
-  background:var(--panel);
-  overflow:auto;
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
+  width:400px;max-width:100%;background:var(--panel);overflow:auto;
+  border-right:1px solid var(--border);display:flex;flex-direction:column
 }
 #map{flex:1;min-width:0;min-height:0}
 
@@ -95,11 +80,9 @@ body{display:flex;flex-direction:column}
 .chip.final.active{background:#475569;border-color:#475569}
 
 #games{flex:1;overflow:auto;padding:6px 0 16px;-webkit-overflow-scrolling:touch}
-
 .game{
-  background:var(--card);margin:6px 8px;padding:12px;
-  border-radius:12px;cursor:pointer;transition:background .15s;
-  border-left:4px solid #475569
+  background:var(--card);margin:6px 8px;padding:12px;border-radius:12px;cursor:pointer;
+  transition:background .15s;border-left:4px solid #475569
 }
 .game:active{background:var(--card-hover)}
 .game.live-border{border-left-color:var(--live)}
@@ -114,35 +97,37 @@ body{display:flex;flex-direction:column}
 .score{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em}
 .meta{font-size:12px;color:var(--muted);line-height:1.5}
 .meta strong{color:#e2e8f0}
-.live{color:var(--live)}
-.future{color:#60a5fa}
-.final{color:var(--final)}
+.live{color:var(--live)}.future{color:#60a5fa}.final{color:var(--final)}
 
-/* Map labels */
+/* Map labels with logos */
 .game-label{
-  color:#fff;font-weight:700;font-size:12px;line-height:1.2;
-  padding:4px 7px;border-radius:8px;text-align:center;
-  white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5);
-  pointer-events:none;border:2px solid transparent
+  color:#fff;font-weight:700;font-size:11px;line-height:1.15;
+  padding:5px 7px 4px;border-radius:10px;text-align:center;
+  white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.55);
+  pointer-events:none;border:2px solid transparent;min-width:96px
 }
-.label-live{background:rgba(22,163,74,.94);border-color:#4ade80}
-.label-fut{background:rgba(37,99,235,.92);border-color:#60a5fa}
-.label-final{background:rgba(15,23,42,.94);border-color:#94a3b8}
-.game-label .teams{font-size:11px;opacity:.95}
-.game-label .sc{font-size:14px;margin-top:1px}
-.game-label .tm{font-size:10px;font-weight:600;margin-top:2px;opacity:.9}
+.label-live{background:rgba(22,163,74,.95);border-color:#4ade80}
+.label-fut{background:rgba(37,99,235,.93);border-color:#60a5fa}
+.label-final{background:rgba(15,23,42,.95);border-color:#94a3b8}
+.game-label .logos{
+  display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:2px
+}
+.game-label .logos img{
+  width:22px;height:22px;object-fit:contain;
+  background:rgba(255,255,255,.12);border-radius:4px;padding:1px
+}
+.game-label .logos .at{font-size:9px;opacity:.85;font-weight:600}
+.game-label .sc{font-size:14px;font-weight:800;margin:1px 0}
+.game-label .tm{font-size:10px;font-weight:600;opacity:.92}
+.game-label .dt{font-size:9px;font-weight:600;opacity:.85;margin-top:1px}
 
-/* Mobile drawer */
 .menu-toggle{
   display:none;border:1px solid var(--border);background:#121a2b;color:#fff;
   border-radius:8px;width:40px;height:40px;font-size:18px;cursor:pointer;flex-shrink:0
 }
-.backdrop{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050
-}
+.backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050}
 .backdrop.show{display:block}
 
-/* Mobile layout */
 @media (max-width:900px){
   .menu-toggle{display:inline-flex;align-items:center;justify-content:center}
   .main{flex-direction:column}
@@ -214,8 +199,7 @@ const arenas = {
 
 const map = L.map('map', { zoomControl: true }).setView([45, -97], 4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap',
-  maxZoom: 18
+  attribution: '© OpenStreetMap', maxZoom: 18
 }).addTo(map);
 
 let games = [];
@@ -284,23 +268,76 @@ function formatDateFR(iso) {
     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
   });
 }
+function formatDateShort(iso) {
+  if (!iso) return '';
+  return new Date(iso + 'T12:00:00').toLocaleDateString('fr-CA', {
+    day: 'numeric', month: 'short'
+  });
+}
 function formatStartLocal(g) {
   return new Date(g.startTimeUTC).toLocaleString('fr-CA', {
     weekday: 'short', day: 'numeric', month: 'short',
     hour: '2-digit', minute: '2-digit'
   });
 }
-function matchesStatus(g) {
-  if (activeStatus === 'ALL') return true;
+function teamLogo(team) {
+  return team.logo || `https://assets.nhle.com/logos/nhl/svg/${team.abbrev}_light.svg`;
+}
+
+/** True if game ended / started within the last 24 hours */
+function withinLast24h(g) {
+  const now = Date.now();
+  const start = new Date(g.startTimeUTC).getTime();
+  // estimate end ~3.5h after start for finished games without end time
+  const ref = start;
+  return (now - ref) >= 0 && (now - ref) <= 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Filtre "Tous" (mode aujourd'hui / now) :
+ * - matchs LIVE
+ * - matchs terminés des 24 dernières heures
+ * - seulement le prochain match à venir (le plus proche dans le temps)
+ * Si une date précise est choisie : tous les matchs de cette date.
+ */
+function matchesTousSmart(g, nextFutId) {
+  if (selectedDate) return true; // date choisie → tout le jour
+
+  if (g.gameState === 'LIVE') return true;
+
+  if (g.gameState === 'FINAL' || g.gameState === 'OFF') {
+    return withinLast24h(g);
+  }
+
+  if (g.gameState === 'FUT') {
+    return nextFutId != null && g.id === nextFutId;
+  }
+
+  return false;
+}
+
+function getNextFutId(list) {
+  const now = Date.now();
+  const fut = list
+    .filter(g => g.gameState === 'FUT' && new Date(g.startTimeUTC).getTime() >= now - 5 * 60 * 1000)
+    .sort((a, b) => new Date(a.startTimeUTC) - new Date(b.startTimeUTC));
+  return fut.length ? fut[0].id : null;
+}
+
+function matchesStatus(g, nextFutId) {
+  if (activeStatus === 'ALL') return matchesTousSmart(g, nextFutId);
   if (activeStatus === 'LIVE') return g.gameState === 'LIVE';
   if (activeStatus === 'FUT') return g.gameState === 'FUT';
   if (activeStatus === 'FINAL') return g.gameState === 'FINAL' || g.gameState === 'OFF';
   return true;
 }
+
 function filteredGames() {
   const q = (document.getElementById('filter').value || '').toUpperCase().trim();
+  const nextFutId = getNextFutId(games);
+
   return games.filter(g => {
-    if (!matchesStatus(g)) return false;
+    if (!matchesStatus(g, nextFutId)) return false;
     if (!q) return true;
     const hay = [
       g.awayTeam.abbrev, g.homeTeam.abbrev,
@@ -310,18 +347,29 @@ function filteredGames() {
     return hay.includes(q);
   });
 }
+
 function labelHtml(g) {
+  const al = teamLogo(g.awayTeam);
+  const hl = teamLogo(g.homeTeam);
+  const dateStr = formatDateShort(g.gameDate);
   return `
     <div class="game-label ${labelClass(g.gameState)}">
-      <div class="teams">${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</div>
+      <div class="logos">
+        <img src="${al}" alt="${g.awayTeam.abbrev}" onerror="this.style.display='none'">
+        <span class="at">@</span>
+        <img src="${hl}" alt="${g.homeTeam.abbrev}" onerror="this.style.display='none'">
+      </div>
       <div class="sc">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
       <div class="tm">${clockText(g)}</div>
+      <div class="dt">${dateStr}</div>
     </div>`;
 }
+
 function clearMarkers() {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 }
+
 function placeMarkers(list) {
   clearMarkers();
   const byArena = {};
@@ -333,22 +381,42 @@ function placeMarkers(list) {
   Object.entries(byArena).forEach(([abbrev, gs]) => {
     const base = arenas[abbrev];
     gs.forEach((g, i) => {
-      const lat = base[0] + i * 0.12;
-      const lng = base[1] + i * 0.08;
-      const icon = L.divIcon({ className: '', html: labelHtml(g), iconSize: null, iconAnchor: [50, 20] });
-      const m = L.marker([lat, lng], { icon, zIndexOffset: g.gameState === 'LIVE' ? 1000 : 0 }).addTo(map);
+      // offset vertical if several labels on same city
+      const lat = base[0] + i * 0.28;
+      const lng = base[1] + i * 0.05;
+      const icon = L.divIcon({
+        className: '',
+        html: labelHtml(g),
+        iconSize: null,
+        iconAnchor: [55, 28]
+      });
+      const m = L.marker([lat, lng], {
+        icon,
+        zIndexOffset: g.gameState === 'LIVE' ? 1000 : (g.gameState === 'FUT' ? 500 : 0)
+      }).addTo(map);
       m._gameId = g.id;
       m.bindPopup(`
-        <b>${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</b><br>
-        <div style="font-size:22px;font-weight:bold">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
-        <div>${clockText(g)}</div>
-        <div style="font-size:12px;margin-top:4px">${formatStartLocal(g)}</div>
-        <div style="font-size:11px;color:#555">${g.venue?.default || ''}</div>
+        <div style="min-width:140px">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:4px">
+            <img src="${teamLogo(g.awayTeam)}" width="28" height="28" style="object-fit:contain"
+                 onerror="this.style.display='none'">
+            <b>${g.awayTeam.abbrev}</b>
+            <span style="opacity:.6">@</span>
+            <img src="${teamLogo(g.homeTeam)}" width="28" height="28" style="object-fit:contain"
+                 onerror="this.style.display='none'">
+            <b>${g.homeTeam.abbrev}</b>
+          </div>
+          <div style="font-size:22px;font-weight:bold;text-align:center">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
+          <div style="text-align:center">${clockText(g)}</div>
+          <div style="font-size:12px;margin-top:4px;text-align:center">${formatStartLocal(g)}</div>
+          <div style="font-size:11px;color:#555;text-align:center">${g.venue?.default || ''}</div>
+        </div>
       `);
       markers.push(m);
     });
   });
 }
+
 function draw() {
   const list = filteredGames();
   const el = document.getElementById('games');
@@ -366,15 +434,13 @@ function draw() {
   el.innerHTML = list.map(g => {
     const cls = statusClass(g.gameState);
     const border = borderClass(g.gameState);
-    const awayLogo = g.awayTeam.logo || `https://assets.nhle.com/logos/nhl/svg/${g.awayTeam.abbrev}_light.svg`;
-    const homeLogo = g.homeTeam.logo || `https://assets.nhle.com/logos/nhl/svg/${g.homeTeam.abbrev}_light.svg`;
     return `
       <div class="game ${border}" data-id="${g.id}">
         <div class="teams-row ${cls}">
-          <img class="logo" src="${awayLogo}" alt="${g.awayTeam.abbrev}" loading="lazy" onerror="this.style.display='none'">
+          <img class="logo" src="${teamLogo(g.awayTeam)}" alt="${g.awayTeam.abbrev}" loading="lazy" onerror="this.style.display='none'">
           <b>${g.awayTeam.abbrev}</b>
           <span class="vs">@</span>
-          <img class="logo" src="${homeLogo}" alt="${g.homeTeam.abbrev}" loading="lazy" onerror="this.style.display='none'">
+          <img class="logo" src="${teamLogo(g.homeTeam)}" alt="${g.homeTeam.abbrev}" loading="lazy" onerror="this.style.display='none'">
           <b>${g.homeTeam.abbrev}</b>
         </div>
         <div class="score">${g.awayTeam.score ?? 0} – ${g.homeTeam.score ?? 0}</div>
@@ -397,11 +463,11 @@ function draw() {
         const m = markers.find(mk => mk._gameId === g.id);
         if (m) m.openPopup();
       }
-      // close drawer on mobile after selection
       closeMenu();
     });
   });
 }
+
 function applyData(data) {
   games = [];
   (data.gamesByDate || []).forEach(d => {
@@ -419,6 +485,7 @@ function applyData(data) {
   draw();
   setTimeout(() => map.invalidateSize(), 120);
 }
+
 async function fetchLive(dateIso) {
   for (const url of proxyUrlsFor(dateIso)) {
     try {
@@ -449,7 +516,6 @@ async function load() {
   }
 }
 
-/* Mobile menu */
 const sidebar = document.getElementById('sidebar');
 const backdrop = document.getElementById('backdrop');
 function openMenu() {
@@ -466,7 +532,6 @@ document.getElementById('menuToggle').addEventListener('click', () => {
 });
 backdrop.addEventListener('click', closeMenu);
 
-/* Filters */
 document.getElementById('statusFilters').addEventListener('click', e => {
   const chip = e.target.closest('.chip');
   if (!chip) return;
@@ -481,7 +546,6 @@ document.getElementById('filter').addEventListener('input', () => {
   draw();
 });
 
-/* Date nav */
 document.getElementById('datePick').addEventListener('change', e => {
   if (!e.target.value) return;
   selectedDate = e.target.value;
@@ -506,10 +570,7 @@ document.getElementById('todayBtn').addEventListener('click', () => {
 document.getElementById('datePick').value = todayISO();
 selectedDate = null;
 load();
-// Auto refresh live every 30s
 refreshTimer = setInterval(load, 30000);
-
-// Fix map size on orientation change
 window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 200));
 </script>
 </body>
